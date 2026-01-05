@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Maps Image Crawler</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🗺️ Maps Image Crawler</h1>
+            <p class="subtitle">Lấy links ảnh từ Google Maps</p>
+        </div>
+
+        <div class="form-section">
+            <div class="input-group">
+                <label for="address">📍 Địa chỉ:</label>
+                <input type="text" id="address" placeholder="Nhập địa chỉ cần tìm..." autocomplete="off">
+            </div>
+
+            <div class="input-group">
+                <label for="maxImages">📸 Số ảnh tối đa:</label>
+                <input type="number" id="maxImages" value="10" min="1" max="50">
+            </div>
+
+            <button id="startBtn" class="btn-primary">
+                <span class="btn-text">Lấy Links</span>
+            </button>
+        </div>
+
+        <div id="status" class="status-section hidden">
+            <div class="status-content">
+                <div id="statusIcon" class="status-icon">⏳</div>
+                <div id="statusText" class="status-text">Đang xử lý...</div>
+            </div>
+            <div id="progressBar" class="progress-bar hidden">
+                <div id="progressFill" class="progress-fill"></div>
+            </div>
+            <div id="statusDetails" class="status-details"></div>
+        </div>
+
+        <div id="results" class="results-section hidden">
+            <div class="results-header">
+                <h3>🖼️ Ảnh đã tìm thấy (<span id="imageCount">0</span>)</h3>
+                <button id="copyAllBtn" class="btn-secondary">📋 Copy tất cả links</button>
+            </div>
+            <div id="imageGrid" class="image-grid"></div>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+
+</html>

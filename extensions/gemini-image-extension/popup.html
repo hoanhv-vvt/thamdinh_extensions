@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Image Analyzer</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="icons/icon48.png" alt="Logo" class="logo">
+            <h1>Gemini Vision</h1>
+        </div>
+
+        <div class="input-group">
+            <label for="apiKey">Gemini API Key</label>
+            <input type="password" id="apiKey" placeholder="Enter your API Key">
+            <button id="saveKey">Save Key</button>
+        </div>
+
+        <div class="input-group">
+            <label>Image</label>
+            <div id="dropZone" class="drop-zone">
+                <span class="drop-zone__prompt">Drag & Drop or Click to Upload</span>
+                <input type="file" id="imageInput" accept="image/*" class="drop-zone__input" multiple>
+                <div id="imagePreviewContainer" hidden>
+                    <!-- Previews will be added here dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="promptInput">Prompt</label>
+            <textarea id="promptInput" rows="3" placeholder="What's in this image?"></textarea>
+        </div>
+
+        <button id="analyzeBtn">Analyze Image</button>
+
+        <div id="resultContainer" hidden>
+            <h3>Result:</h3>
+            <div id="loading" hidden>Analyzing...</div>
+            <div id="resultText"></div>
+        </div>
+    </div>
+    <script src="popup.js"></script>
+</body>
+
+</html>
