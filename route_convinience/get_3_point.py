@@ -231,18 +231,38 @@ class RouteCalculator:
         
         return None
 
-def calculate_points_G_n_T(dis_workhome, time_workhome, dis_homegym, time_homegym, dis_workgym, time_workgym):
+def calculate_points_G_n_T(dis_workhome, time_workhome, dis_homegym, time_homegym, dis_workgym, time_workgym, max_scale=5):
+    """
+    Tính điểm đánh giá dựa trên khoảng cách và thời gian.
+    
+    Args:
+        dis_workhome: Khoảng cách Work -> Home (km)
+        time_workhome: Thời gian Work -> Home (phút)
+        dis_homegym: Khoảng cách Home -> Gym (km)
+        time_homegym: Thời gian Home -> Gym (phút)
+        dis_workgym: Khoảng cách Work -> Gym (km)
+        time_workgym: Thời gian Work -> Gym (phút)
+        max_scale: Thang điểm tối đa (default=5, có thể thay đổi thành 10, 100, etc.)
+    
+    Returns:
+        tuple: (evaluation, G, T, dRate, tRate)
+            - evaluation: Điểm đánh giá tổng (0-max_scale)
+            - G: Điểm dựa trên khoảng cách (0-max_scale)
+            - T: Điểm dựa trên thời gian (0-max_scale)
+            - dRate: Tỷ lệ khoảng cách (0-1)
+            - tRate: Tỷ lệ thời gian (0-1)
+    """
     # Tính dRate = dHomeWork / (dWorkGym + dHomeGym)
     dRate = dis_workhome / (dis_workgym + dis_homegym)
     
-    # Tính ra thang 5: G = 5 * dRate
-    G = 5 * dRate
+    # Tính ra thang điểm: G = max_scale * dRate
+    G = max_scale * dRate
     
     # Tính tRate = tHomeWork / (tWorkGym + tHomeGym)
     tRate = time_workhome / (time_workgym + time_homegym)
     
-    # Tính ra thang 5: T = 5 * tRate
-    T = 5 * tRate
+    # Tính ra thang điểm: T = max_scale * tRate
+    T = max_scale * tRate
     
     # Đánh giá = (0.65 * G) + (0.35 * T)
     evaluation = (0.65 * G) + (0.35 * T)
@@ -266,6 +286,9 @@ def main():
     # Initialize calculator
     calculator = RouteCalculator(API_KEY)
     
+    # Get max_scale from environment variable (default=5)
+    MAX_SCALE = int(os.getenv('MAX_SCALE', '5'))
+    
     # Define the 3 addresses
     work_address = "Đại học Thương Mại, Hà Nội"
     home_address = "Công viên Cầu Giấy, Hà Nội"
@@ -275,7 +298,15 @@ def main():
     dis_workhome, time_workhome, dis_homegym, time_homegym, dis_workgym, time_workgym = calculator.get_location_n_time(work_address, home_address, gym_address)
     
     # CALCULATE POINTS G AND T
-    evaluation, G, T, dRate, tRate = calculate_points_G_n_T(dis_workhome, time_workhome, dis_homegym, time_homegym, dis_workgym, time_workgym)
+    evaluation, G, T, dRate, tRate = calculate_points_G_n_T(
+        dis_workhome, time_workhome, 
+        dis_homegym, time_homegym, 
+        dis_workgym, time_workgym,
+        max_scale=MAX_SCALE
+    )
+
+    if evaluation > MAX_SCALE:
+        evaluation = MAX_SCALE
     
     return evaluation, G, T, dRate, tRate
     

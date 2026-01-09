@@ -4,9 +4,10 @@ Chrome extension để crawl và tải ảnh từ Google Maps một cách dễ d
 
 ## ✨ Tính năng
 
-- 📍 Nhập địa chỉ và tự động mở Google Maps
+- 📍 Nhập địa chỉ và tự động mở Google Maps  
+- 🔇 **Chạy trong background tab** - tab không được focus (nhưng vẫn visible trong tab bar)
 - 📸 Tự động crawl ảnh từ địa điểm (bao gồm Street View và ảnh người dùng)
-- 💾 Tải ảnh chất lượng cao về máy
+- 💾 Hiển thị ảnh trong extension popup
 - 📁 **Tùy chỉnh thư mục lưu ảnh** (mới!)
 - 🎯 Tùy chỉnh số lượng ảnh tối đa
 - 📊 Hiển thị tiến trình và kết quả chi tiết
@@ -43,10 +44,11 @@ Extension nằm trong thư mục:
    - Nhập tên = tạo thư mục con trong Downloads
 5. **Click "Bắt đầu Crawl"**
 6. Extension sẽ:
-   - Mở tab mới với Google Maps
+   - Mở background tab với Google Maps (tab không được focus)
    - Tìm kiếm địa chỉ
-   - Tự động crawl ảnh
-   - Tải ảnh về thư mục đã chọn
+   - Tự động crawl ảnh  
+   - Hiển thị ảnh trong popup
+   - Tự động đóng tab khi hoàn thành
 7. **Click "Mở thư mục Downloads"** để xem ảnh đã tải
 
 ### Kết quả
@@ -67,7 +69,7 @@ google-maps-crawler/
 ├── popup.html            # Giao diện popup
 ├── popup.css             # Styling cho popup
 ├── popup.js              # Logic popup
-├── content.js            # Script crawl ảnh trên Google Maps
+├── content.js            # Script crawl ảnh (inject vào Google Maps)
 ├── background.js         # Service worker
 ├── icons/                # Icons extension
 │   ├── icon16.png
@@ -91,11 +93,20 @@ Extension yêu cầu các quyền sau:
 
 1. **Popup** (`popup.js`):
    - Nhận input từ người dùng
-   - Mở tab Google Maps với địa chỉ
-   - Gửi message đến content script
-   - Nhận URLs ảnh và trigger downloads
+   - Tạo background tab với Google Maps (`active: false`)
+   - Gửi message đến content script trong tab
+   - Nhận URLs ảnh và hiển thị kết quả
+   - Tự động đóng tab khi hoàn thành
 
 2. **Content Script** (`content.js`):
+   - Inject vào trang Google Maps
+   - Scroll để load thêm ảnh (nếu cần)
+   - Trích xuất URLs ảnh chất lượng cao trực tiếp từ DOM
+   - Gửi URLs về popup
+
+3. **Background Service Worker** (`background.js`):
+   - Quản lý lifecycle của extension (đơn giản)
+   - Xử lý download ảnh nếu cần
    - Inject vào trang Google Maps
    - Tìm và click vào photo gallery
    - Scroll để load thêm ảnh

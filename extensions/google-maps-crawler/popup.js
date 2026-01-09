@@ -57,9 +57,10 @@ async function startCrawling() {
     try {
         const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(address)}`;
 
+        // Create background tab
         const tab = await chrome.tabs.create({
             url: mapsUrl,
-            active: false
+            active: false  // Tab runs in background
         });
         currentTabId = tab.id;
 
@@ -155,11 +156,11 @@ function handleResponse(response) {
 
     displayImageLinks(imageUrls);
 
-    // Close tab
+    // Close background tab
     if (currentTabId) {
         chrome.tabs.remove(currentTabId, () => {
             if (!chrome.runtime.lastError) {
-                console.log('✅ Tab closed');
+                console.log('✅ Background tab closed');
             }
         });
     }

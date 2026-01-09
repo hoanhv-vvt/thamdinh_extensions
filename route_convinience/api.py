@@ -14,12 +14,16 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Get default max_scale from environment variable
+DEFAULT_MAX_SCALE = int(os.getenv('MAX_SCALE', '5'))
+
 # Request model
 class LocationRequest(BaseModel):
     work_address: str
     home_address: str
     gym_address: str
     api_key: str = None  # Optional, sẽ dùng từ env nếu không có
+    max_scale: int = DEFAULT_MAX_SCALE  # Optional, thang điểm tối đa (default from env)
     
     class Config:
         json_schema_extra = {
@@ -27,7 +31,8 @@ class LocationRequest(BaseModel):
                 "work_address": "Đại học Thương Mại, Hà Nội",
                 "home_address": "Công viên Cầu Giấy, Hà Nội",
                 "gym_address": "Bến xe Mỹ Đình, Hà Nội",
-                "api_key": "your_goong_api_key"
+                "api_key": "your_goong_api_key",
+                "max_scale": 5
             }
         }
 
@@ -124,7 +129,8 @@ def evaluate_location(request: LocationRequest):
         evaluation, G, T, dRate, tRate = calculate_points_G_n_T(
             dis_workhome, time_workhome,
             dis_homegym, time_homegym,
-            dis_workgym, time_workgym
+            dis_workgym, time_workgym,
+            max_scale=request.max_scale
         )
         
         # Prepare response
@@ -132,18 +138,18 @@ def evaluate_location(request: LocationRequest):
             evaluation=round(evaluation, 2),
             G=round(G, 2),
             T=round(T, 2),
-            dRate=round(dRate, 4),
-            tRate=round(tRate, 4),
-            distances={
-                "work_home": dis_workhome,
-                "home_gym": dis_homegym,
-                "work_gym": dis_workgym
-            },
-            times={
-                "work_home": time_workhome,
-                "home_gym": time_homegym,
-                "work_gym": time_workgym
-            }
+            # dRate=round(dRate, 4),
+            # tRate=round(tRate, 4),
+            # distances={
+            #     "work_home": dis_workhome,
+            #     "home_gym": dis_homegym,
+            #     "work_gym": dis_workgym
+            # },
+            # times={
+            #     "work_home": time_workhome,
+            #     "home_gym": time_homegym,
+            #     "work_gym": time_workgym
+            # }
         )
         
     except HTTPException:
