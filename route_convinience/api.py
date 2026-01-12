@@ -1,5 +1,6 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Form
 from pydantic import BaseModel
+from typing import Optional
 from get_3_point import RouteCalculator, calculate_points_G_n_T
 import os
 from dotenv import load_dotenv
@@ -17,53 +18,18 @@ app = FastAPI(
 # Get default max_scale from environment variable
 DEFAULT_MAX_SCALE = int(os.getenv('MAX_SCALE', '5'))
 
-# Request model
-class LocationRequest(BaseModel):
-    work_address: str
-    home_address: str
-    gym_address: str
-    api_key: str = None  # Optional, sẽ dùng từ env nếu không có
-    max_scale: int = DEFAULT_MAX_SCALE  # Optional, thang điểm tối đa (default from env)
-    
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "work_address": "Đại học Thương Mại, Hà Nội",
-                "home_address": "Công viên Cầu Giấy, Hà Nội",
-                "gym_address": "Bến xe Mỹ Đình, Hà Nội",
-                "api_key": "your_goong_api_key",
-                "max_scale": 5
-            }
-        }
-
 # Response model
 class EvaluationResponse(BaseModel):
-    evaluation: float
+    rating: float
     G: float
     T: float
-    dRate: float
-    tRate: float
-    distances: dict
-    times: dict
     
     class Config:
         json_schema_extra = {
             "example": {
-                "evaluation": 4.22,
+                "rating": 4.22,
                 "G": 4.11,
-                "T": 4.42,
-                "dRate": 0.82,
-                "tRate": 0.88,
-                "distances": {
-                    "work_home": 1.5,
-                    "home_gym": 2.3,
-                    "work_gym": 3.2
-                },
-                "times": {
-                    "work_home": 8.5,
-                    "home_gym": 12.3,
-                    "work_gym": 18.5
-                }
+                "T": 4.42
             }
         }
 
@@ -79,7 +45,13 @@ def read_root():
     }
 
 @app.post("/evaluate", response_model=EvaluationResponse)
-def evaluate_location(request: LocationRequest):
+def evaluate_location(
+    work_address: str = Form(..., description="Địa chỉ công ty"),
+    home_address: str = Form(..., description="Địa chỉ nhà"),
+    gym_address: str = Form(..., description="Địa chỉ phòng gym"),
+    api_key: Optional[str] = Form(None, description="Goong Maps API key (optional)"),
+    max_scale: int = Form(DEFAULT_MAX_SCALE, description="Thang điểm tối đa")
+):
     """
     Đánh giá vị trí nhà dựa trên khoảng cách và thời gian từ công ty và phòng gym.
     
@@ -89,7 +61,7 @@ def evaluate_location(request: LocationRequest):
     - **api_key**: Goong Maps API key (optional, sẽ dùng từ env nếu không có)
     
     Returns:
-    - **evaluation**: Điểm đánh giá tổng (0-5)
+    - **rating**: Điểm đánh giá tổng (0-5)
     - **G**: Điểm dựa trên khoảng cách (0-5)
     - **T**: Điểm dựa trên thời gian (0-5)
     - **dRate**: Tỷ lệ khoảng cách
@@ -99,23 +71,23 @@ def evaluate_location(request: LocationRequest):
     """
     try:
         # Get API key
-        api_key = request.api_key or os.getenv('GOONG_API_KEY')
+        used_api_key = api_key or os.getenv('GOONG_API_KEY')
         
-        if not api_key:
+        if not used_api_key:
             raise HTTPException(
                 status_code=400,
                 detail="API key is required. Provide it in request body or set GOONG_API_KEY environment variable."
             )
         
         # Initialize calculator
-        calculator = RouteCalculator(api_key)
+        calculator = RouteCalculator(used_api_key)
         
         # Get distances and times
         dis_workhome, time_workhome, dis_homegym, time_homegym, dis_workgym, time_workgym = \
             calculator.get_location_n_time(
-                request.work_address,
-                request.home_address,
-                request.gym_address
+                work_address,
+                home_address,
+                gym_address
             )
         
         # Check if geocoding was successful
@@ -125,31 +97,19 @@ def evaluate_location(request: LocationRequest):
                 detail="Failed to geocode one or more addresses. Please check the addresses."
             )
         
-        # Calculate evaluation
-        evaluation, G, T, dRate, tRate = calculate_points_G_n_T(
+        # Calculate rating
+        rating, G, T, dRate, tRate = calculate_points_G_n_T(
             dis_workhome, time_workhome,
             dis_homegym, time_homegym,
             dis_workgym, time_workgym,
-            max_scale=request.max_scale
+            max_scale=max_scale
         )
         
         # Prepare response
         return EvaluationResponse(
-            evaluation=round(evaluation, 2),
+            rating=round(rating, 2),
             G=round(G, 2),
-            T=round(T, 2),
-            # dRate=round(dRate, 4),
-            # tRate=round(tRate, 4),
-            # distances={
-            #     "work_home": dis_workhome,
-            #     "home_gym": dis_homegym,
-            #     "work_gym": dis_workgym
-            # },
-            # times={
-            #     "work_home": time_workhome,
-            #     "home_gym": time_homegym,
-            #     "work_gym": time_workgym
-            # }
+            T=round(T, 2)
         )
         
     except HTTPException:
@@ -162,4 +122,4 @@ def evaluate_location(request: LocationRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8452)
